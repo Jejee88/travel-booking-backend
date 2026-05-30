@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum DestinationType {
+  SINGLE_DESTINATION
+  MULTI_DESTINATION
+}
+
+enum BookingStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  password  String
+  role      Role      @default(CUSTOMER)
+  bookings  Booking[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Destination {
+  id          Int             @id @default(autoincrement())
+  title       String
+  description String          @db.Text
+  price       Int
+  quota       Int
+  duration    String
+  type        DestinationType
+  bookings    Booking[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model Booking {
+  id            Int           @id @default(autoincrement())
+  userId        Int
+  destinationId Int
+  totalPrice    Int
+  totalPerson   Int
+  bookingDate   DateTime
+  status        BookingStatus @default(PENDING)
+  user          User          @relation(fields: [userId], references: [id])
+  destination   Destination   @relation(fields: [destinationId], references: [id])
+  payment       Payment?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Payment {
+  id            Int           @id @default(autoincrement())
+  bookingId     Int           @unique
+  amount        Int
+  paymentMethod String
+  paymentProof  String
+  status        PaymentStatus @default(PENDING)
+  booking       Booking       @relation(fields: [bookingId], references: [id])
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
