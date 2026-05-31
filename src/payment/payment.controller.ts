@@ -1,21 +1,10 @@
 import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Request,
-  UseGuards,
+  Body, Controller, Get, Param,
+  Patch, Post, Request, UseGuards,
 } from '@nestjs/common';
-
-import {
-  ApiTags,
-  ApiBearerAuth,
-  ApiOperation,
-} from '@nestjs/swagger';
-
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiBody } from '@nestjs/swagger';
 import { PaymentService } from './payment.service';
+import { CreatePaymentDto } from './dto/create-payment.dto';
 import { JwtAuthGuard } from '../auth/common/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/common/guards/roles.guard';
 import { Roles } from '../auth/common/decorators/roles.decorator';
@@ -27,20 +16,15 @@ import { Role } from '../auth/common/enums/role.enum';
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
-  // =========================
-  // CREATE PAYMENT (CUSTOMER)
-  // =========================
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.CUSTOMER)
   @Post()
   @ApiOperation({ summary: 'Customer melakukan pembayaran booking' })
-  pay(@Body() dto: any, @Request() req) {
+  @ApiBody({ type: CreatePaymentDto })
+  pay(@Body() dto: CreatePaymentDto, @Request() req) {
     return this.paymentService.createPayment(dto, req.user.sub);
   }
 
-  // =========================
-  // GET ALL PAYMENT (ADMIN)
-  // =========================
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Get()
@@ -49,13 +33,11 @@ export class PaymentController {
     return this.paymentService.getAllPayments();
   }
 
-  // =========================
-  // CONFIRM PAYMENT (ADMIN)
-  // =========================
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Patch('confirm/:id')
   @ApiOperation({ summary: 'Admin konfirmasi / tolak payment' })
+  @ApiBody({ schema: { example: { status: 'CONFIRMED' } } })
   confirm(
     @Param('id') id: string,
     @Body() body: { status: 'CONFIRMED' | 'REJECTED' },
