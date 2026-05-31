@@ -13,4 +13,8 @@ export class CreatePaymentDto {
   @ApiProperty({ example: 'TRANSFER' })
   @IsString()
   paymentMethod: string;
+
+  @ApiProperty({ example: 'https://bukti-transfer.jpg' })
+  @IsString()
+  paymentProof: string;
 }
