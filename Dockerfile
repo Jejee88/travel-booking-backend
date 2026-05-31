@@ -1,9 +1,8 @@
 FROM node:20-alpine
 RUN apk add --no-cache openssl
 WORKDIR /app
-COPY package*.json ./
-RUN npm install
 COPY . .
+RUN npm install
 RUN npx prisma generate
 RUN npm run build
 EXPOSE 3000
