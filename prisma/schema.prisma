@@ -73,6 +73,7 @@ model Payment {
   bookingId     Int           @unique
   amount        Int
   paymentMethod String
+  paymentProof  String?
   status        PaymentStatus @default(PENDING)
   booking       Booking       @relation(fields: [bookingId], references: [id])
   createdAt     DateTime      @default(now())

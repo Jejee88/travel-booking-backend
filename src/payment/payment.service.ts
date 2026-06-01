@@ -48,6 +48,7 @@ export class PaymentService {
         bookingId: dto.bookingId,
         amount: dto.amount,
         paymentMethod: dto.paymentMethod,
+        paymentProof: dto.paymentProof,
         status: 'PENDING',
       },
     });
@@ -78,17 +79,3 @@ export class PaymentService {
     }
 
     const updated = await this.prisma.payment.update({
-      where: { id },
-      data: { status },
-    });
-
-    if (status === 'CONFIRMED') {
-      await this.prisma.booking.update({
-        where: { id: payment.bookingId },
-        data: { status: 'PAID' },
-      });
-    }
-
-    return { message: `Payment ${status}`, data: updated };
-  }
-}
