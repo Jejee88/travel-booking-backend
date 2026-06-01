@@ -19,7 +19,7 @@ export class BookingController {
   @ApiOperation({ summary: 'Buat booking baru (Customer only)' })
   @ApiBody({ type: CreateBookingDto })
   createBooking(@Request() req, @Body() dto: CreateBookingDto) {
-    return this.bookingService.createBooking(req.user.sub, dto);
+    return this.bookingService.createBooking(Number(req.user.sub), dto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -34,6 +34,6 @@ export class BookingController {
   @Get('my')
   @ApiOperation({ summary: 'Lihat booking milik user login' })
   myBookings(@Request() req) {
-    return this.bookingService.findByUser(req.user.sub);
+    return this.bookingService.findByUser(Number(req.user.sub));
   }
 }
