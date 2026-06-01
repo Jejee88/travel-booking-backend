@@ -79,3 +79,17 @@ export class PaymentService {
     }
 
     const updated = await this.prisma.payment.update({
+      where: { id },
+      data: { status },
+    });
+
+    if (status === 'CONFIRMED') {
+      await this.prisma.booking.update({
+        where: { id: payment.bookingId },
+        data: { status: 'PAID' },
+      });
+    }
+
+    return { message: `Payment ${status}`, data: updated };
+  }
+}
