@@ -1,39 +1,53 @@
-import { Body, Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
-import { BookingService } from './booking.service';
-import { CreateBookingDto } from './dto/create-booking.dto';
-import { JwtAuthGuard } from '../auth/common/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/common/guards/roles.guard';
-import { Roles } from '../auth/common/decorators/roles.decorator';
-import { Role } from '../auth/common/enums/role.enum';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 
-@ApiTags('Booking')
-@ApiBearerAuth()
-@Controller('booking')
-export class BookingController {
-  constructor(private readonly bookingService: BookingService) {}
+@Injectable()
+export class BookingService {
+  constructor(private prisma: PrismaService) {}
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.CUSTOMER)
-  @Post()
-  @ApiOperation({ summary: 'Buat booking baru (Customer only)' })
-  @ApiBody({ type: CreateBookingDto })
-  createBooking(@Request() req, @Body() dto: CreateBookingDto) {
-    return this.bookingService.createBooking(req.user.sub, dto);
+  async createBooking(userId: number, dto: {
+    destinationId: number;
+    totalPerson: number;
+    bookingDate: string;
+  }) {
+    const destination = await this.prisma.destination.findUnique({
+      where: { id: dto.destinationId },
+    });
+    if (!destination) throw new NotFoundException('Destination not found');
+
+    const totalPrice = destination.price * dto.totalPerson;
+
+    const booking = await this.prisma.booking.create({
+      data: {
+        userId,
+        destinationId: dto.destinationId,
+        totalPerson: dto.totalPerson,
+        totalPrice,
+        bookingDate: new Date(dto.bookingDate),
+        status: 'PENDING',
+      },
+      include: { destination: true },
+    });
+
+    return { message: 'Booking created', data: booking };
+  }
+  
+async updateBooking(id: number, dto: any) {
+  return this.prisma.booking.update({
+    where: { id },
+    data: dto,
+  });
+}
+  async findAll() {
+    return this.prisma.booking.findMany({
+      include: { user: true, destination: true, payment: true },
+    });
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
-  @Get()
-  @ApiOperation({ summary: 'Lihat semua booking (Admin only)' })
-  findAll() {
-    return this.bookingService.findAll();
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('my')
-  @ApiOperation({ summary: 'Lihat booking milik user login' })
-  myBookings(@Request() req) {
-    return this.bookingService.findByUser(req.user.sub);
+  async findByUser(userId: number) {
+    return this.prisma.booking.findMany({
+      where: { userId },
+      include: { destination: true, payment: true },
+    });
   }
 }
